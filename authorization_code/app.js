@@ -11,24 +11,21 @@ var express = require('express'); // Express web server framework
 var request = require('request'); // "Request" library
 var querystring = require('querystring');
 
-var client_id = '03ffe0cac0a0401aa6673c3cf6d02ced'; // Your client id
-var client_secret = 'a57c43efb9644574a96d6623fb8bfbc2'; // Your client secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var privateAuthData = require('../authorization_code/privateAuthData.json');
 
 var app = express();
 
 app.use(express.static(__dirname + '/public'));
 
 app.get('/login', function(req, res) {
-
   // your application requests authorization
   var scope = 'user-read-private user-read-email';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
-      client_id: client_id,
-      scope: scope,
-      redirect_uri: redirect_uri
+      client_id: privateAuthData.client_id,
+      scope: privateAuthData.scope,
+      redirect_uri: privateAuthData.redirect_uri
     }));
 });
 
@@ -40,10 +37,10 @@ app.get('/callback', function(req, res) {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: redirect_uri,
+      redirect_uri: privateAuthData.redirect_uri,
       grant_type: 'authorization_code',
-      client_id: client_id,
-      client_secret: client_secret
+      client_id: privateAuthData.client_id,
+      client_secret:  privateAuthData.client_secret
     },
     json: true
   };
@@ -81,7 +78,7 @@ app.get('/refresh_token', function(req, res) {
   var refresh_token = req.query.refresh_token;
   var authOptions = {
     url: 'https://accounts.spotify.com/api/token',
-    headers: { 'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64')) },
+    headers: { 'Authorization': 'Basic ' + (new Buffer( privateAuthData.client_id + ':' +  privateAuthData.client_secret).toString('base64')) },
     form: {
       grant_type: 'refresh_token',
       refresh_token: refresh_token
